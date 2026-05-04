@@ -33,6 +33,11 @@ these GitHub repository secrets before enabling production deployment:
 - `DJANGO_SECRET_KEY`
 - `DJANGO_DEBUG` (set to `False` for production)
 - `DJANGO_ALLOWED_HOSTS` (for example, `your-domain.com,www.your-domain.com`)
+- `MYSQL_DATABASE` (for example, `myproject`)
+- `MYSQL_USER` (for example, `root`)
+- `MYSQL_PASSWORD`
+- `MYSQL_HOST` (for example, `localhost`)
+- `MYSQL_PORT` (for example, `3306`)
 
 If your systemd service is not named `mysite`, update the final deploy command in
 `.github/workflows/ci-cd.yml`.

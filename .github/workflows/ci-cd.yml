@@ -13,11 +13,29 @@ on:
 
 env:
   PYTHON_VERSION: '3.12'
+  MYSQL_DATABASE: myproject
+  MYSQL_USER: root
+  MYSQL_PASSWORD: root
+  MYSQL_HOST: 127.0.0.1
+  MYSQL_PORT: 3306
 
 jobs:
   ci:
     name: Test Django app
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: ${{ env.MYSQL_DATABASE }}
+          MYSQL_ROOT_PASSWORD: ${{ env.MYSQL_PASSWORD }}
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -p$MYSQL_ROOT_PASSWORD"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Check out repository
@@ -28,6 +46,11 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
+
+      - name: Install MySQL client libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y default-libmysqlclient-dev build-essential pkg-config
 
       - name: Install dependencies
         run: |
@@ -56,22 +79,36 @@ jobs:
           DJANGO_DEBUG: ${{ secrets.DJANGO_DEBUG }}
           DJANGO_ALLOWED_HOSTS: ${{ secrets.DJANGO_ALLOWED_HOSTS }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          envs: DJANGO_SECRET_KEY,DJANGO_DEBUG,DJANGO_ALLOWED_HOSTS,DEPLOY_PATH
+          envs: DJANGO_SECRET_KEY,DJANGO_DEBUG,DJANGO_ALLOWED_HOSTS,DEPLOY_PATH,MYSQL_DATABASE,MYSQL_USER,MYSQL_PASSWORD,MYSQL_HOST,MYSQL_PORT
           script: |
             set -e
 
             : "${DJANGO_SECRET_KEY:?Missing DJANGO_SECRET_KEY}"
             : "${DJANGO_ALLOWED_HOSTS:?Missing DJANGO_ALLOWED_HOSTS}"
             : "${DEPLOY_PATH:?Missing DEPLOY_PATH}"
+            : "${MYSQL_DATABASE:?Missing MYSQL_DATABASE}"
+            : "${MYSQL_USER:?Missing MYSQL_USER}"
+            : "${MYSQL_PASSWORD:?Missing MYSQL_PASSWORD}"
+            : "${MYSQL_HOST:?Missing MYSQL_HOST}"
 
             export DJANGO_SECRET_KEY
             export DJANGO_DEBUG="${DJANGO_DEBUG:-False}"
             export DJANGO_ALLOWED_HOSTS
+            export MYSQL_DATABASE
+            export MYSQL_USER
+            export MYSQL_PASSWORD
+            export MYSQL_HOST
+            export MYSQL_PORT="${MYSQL_PORT:-3306}"
 
             cd "$DEPLOY_PATH"
 
