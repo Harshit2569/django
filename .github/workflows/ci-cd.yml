@@ -76,7 +76,7 @@ jobs:
             cd "$DEPLOY_PATH"
 
             git fetch origin
-            git reset --hard origin/main
+            git reset --hard "origin/${{ github.ref_name }}"
 
             python3 -m venv .venv
             source .venv/bin/activate
@@ -87,5 +87,10 @@ jobs:
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
 
-            pkill -f runserver || true
+            if [ -f django.pid ]; then
+              kill "$(cat django.pid)" 2>/dev/null || true
+              rm -f django.pid
+            fi
+
             nohup python manage.py runserver 0.0.0.0:8000 > output.log 2>&1 &
+            echo $! > django.pid
