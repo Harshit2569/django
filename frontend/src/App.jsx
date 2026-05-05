@@ -8,7 +8,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   // Backend API URL
-  const API_URL = import.meta.env.VITE_API_URL;
+  const API_URL = 'http://13.204.190.31:8000/api/items/';
 
   useEffect(() => {
     fetchItems();
