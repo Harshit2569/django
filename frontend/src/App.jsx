@@ -17,10 +17,20 @@ function App() {
   const fetchItems = async () => {
     try {
       const response = await axios.get(API_URL);
-      setItems(response.data);
+      console.log('API Response:', response.data);
+      if (Array.isArray(response.data)) {
+        setItems(response.data);
+      } else if (response.data && Array.isArray(response.data.results)) {
+        // Handle DRF pagination
+        setItems(response.data.results);
+      } else {
+        console.error('API did not return an array:', response.data);
+        setItems([]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching items:', error);
+      setItems([]);
       setLoading(false);
     }
   };
@@ -57,7 +67,7 @@ function App() {
         <p className="empty-state">Loading...</p>
       ) : (
         <ul>
-          {items.length > 0 ? (
+          {Array.isArray(items) && items.length > 0 ? (
             items.map((item) => (
               <li key={item.id}>
                 <span className="item-name">{item.name}</span>
